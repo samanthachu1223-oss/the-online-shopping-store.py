@@ -1,7 +1,7 @@
 import streamlit as st
 
 # -----------------------------
-# Advanced Online Shop - Safe Stable Version
+# Advanced Online Shop - Stable & Enhanced Version
 # -----------------------------
 
 PRODUCTS = [
@@ -79,8 +79,11 @@ else:
         clear_cart()
 
     if st.sidebar.button("Checkout"):
-        st.session_state.show_checkout = True
-        st.rerun()
+        if not st.session_state.cart:
+            st.sidebar.warning("There's nothing in cart.")
+        else:
+            st.session_state.show_checkout = True
+            st.rerun()
 
 # Product display
 filtered_products = [
@@ -98,27 +101,31 @@ for product in filtered_products:
 
 # Checkout form
 if st.session_state.show_checkout:
-    st.subheader("Checkout")
-    with st.form("checkout_form"):
-        name = st.text_input("Full Name")
-        email = st.text_input("Email")
-        address = st.text_area("Shipping Address")
-        submitted = st.form_submit_button("Place Order")
-        if submitted:
-            total = sum(
-                next((p["price"] for p in PRODUCTS if p["id"] == pid), 0) * qty
-                for pid, qty in st.session_state.cart.items()
-            )
-            shipping = 120 if total > 0 else 0
-            st.session_state.order_completed = {
-                "id": f"ORD-{abs(hash(str(st.session_state.cart))) % 100000}",
-                "customer": {"name": name, "email": email, "address": address},
-                "items": st.session_state.cart.copy(),
-                "total": total + shipping,
-            }
-            clear_cart()
-            st.session_state.show_checkout = False
-            st.rerun()
+    if not st.session_state.cart:
+        st.warning("There's nothing in cart.")
+        st.session_state.show_checkout = False
+    else:
+        st.subheader("Checkout")
+        with st.form("checkout_form"):
+            name = st.text_input("Full Name")
+            email = st.text_input("Email")
+            address = st.text_area("Shipping Address")
+            submitted = st.form_submit_button("Place Order")
+            if submitted:
+                total = sum(
+                    next((p["price"] for p in PRODUCTS if p["id"] == pid), 0) * qty
+                    for pid, qty in st.session_state.cart.items()
+                )
+                shipping = 120 if total > 0 else 0
+                st.session_state.order_completed = {
+                    "id": f"ORD-{abs(hash(str(st.session_state.cart))) % 100000}",
+                    "customer": {"name": name, "email": email, "address": address},
+                    "items": st.session_state.cart.copy(),
+                    "total": total + shipping,
+                }
+                clear_cart()
+                st.session_state.show_checkout = False
+                st.rerun()
 
 # Order confirmation
 if st.session_state.order_completed:
