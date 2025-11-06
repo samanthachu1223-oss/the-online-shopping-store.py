@@ -17,11 +17,14 @@ SIZE_OPTIONS = {
     "Large": 10,
 }
 
+SUGAR_OPTIONS = ["Regular", "Less Sugar", "Half Sugar", "Slightly Sweet", "No Sugar"]
+ICE_OPTIONS = ["Regular Ice", "Less Ice", "No Ice", "Hot"]
+
 # -----------------------------
 # Session State Initialization
 # -----------------------------
 if "cart" not in st.session_state:
-    st.session_state.cart = {}  # {(pid, size): qty}
+    st.session_state.cart = {}  # {(pid, size, sugar, ice): qty}
 if "show_checkout" not in st.session_state:
     st.session_state.show_checkout = False
 if "order_completed" not in st.session_state:
@@ -33,8 +36,8 @@ if "order_completed" not in st.session_state:
 def format_currency(amount):
     return f"NT$ {amount}"
 
-def add_to_cart(pid, size, qty=1):
-    key = (pid, size)
+def add_to_cart(pid, size, sugar, ice, qty=1):
+    key = (pid, size, sugar, ice)
     st.session_state.cart[key] = st.session_state.cart.get(key, 0) + qty
     st.rerun()
 
@@ -71,7 +74,7 @@ else:
     total = 0
     cart_snapshot = list(st.session_state.cart.items())
 
-    for (pid, size), qty in cart_snapshot:
+    for (pid, size, sugar, ice), qty in cart_snapshot:
         product = next((p for p in PRODUCTS if p["id"] == pid), None)
         if not product:
             continue
@@ -79,17 +82,18 @@ else:
         size_price = SIZE_OPTIONS.get(size, 0)
         item_price = product["price"] + size_price
         
-        st.sidebar.write(f"{product['emoji']} **{product['title']}** ({size})")
+        st.sidebar.write(f"{product['emoji']} **{product['title']}**")
+        st.sidebar.caption(f"{size} | {sugar} | {ice}")
         st.sidebar.write(f"{format_currency(item_price)} × {qty} = {format_currency(item_price * qty)}")
 
         new_qty = st.sidebar.number_input(
             f"Quantity",
             min_value=0,
             value=qty,
-            key=f"qty_{pid}_{size}"
+            key=f"qty_{pid}_{size}_{sugar}_{ice}"
         )
         if new_qty != qty:
-            update_cart_qty((pid, size), new_qty)
+            update_cart_qty((pid, size, sugar, ice), new_qty)
         
         total += item_price * qty
         st.sidebar.divider()
@@ -132,22 +136,36 @@ for product in filtered_products:
             st.write(product["description"])
             st.write(f"💰 Price: {format_currency(product['price'])} and up")
             
-            size_col, btn_col = st.columns([2, 1])
+            # Create three columns for size, sugar, and ice
+            size_col, sugar_col, ice_col = st.columns(3)
+            
             with size_col:
                 size = st.selectbox(
-                    "Select size",
+                    "Size",
                     options=list(SIZE_OPTIONS.keys()),
-                    key=f"size_{product['id']}",
-                    label_visibility="collapsed"
+                    key=f"size_{product['id']}"
                 )
                 size_price = SIZE_OPTIONS[size]
                 if size_price > 0:
-                    st.caption(f"({size} +{format_currency(size_price)})")
+                    st.caption(f"+{format_currency(size_price)}")
             
-            with btn_col:
-                if st.button("Add to Cart", key=f"add_{product['id']}", use_container_width=True):
-                    add_to_cart(product["id"], size)
-                    st.success("Added!")
+            with sugar_col:
+                sugar = st.selectbox(
+                    "Sugar Level",
+                    options=SUGAR_OPTIONS,
+                    key=f"sugar_{product['id']}"
+                )
+            
+            with ice_col:
+                ice = st.selectbox(
+                    "Ice Level",
+                    options=ICE_OPTIONS,
+                    key=f"ice_{product['id']}"
+                )
+            
+            if st.button("Add to Cart", key=f"add_{product['id']}", use_container_width=True):
+                add_to_cart(product["id"], size, sugar, ice)
+                st.success("Added!")
         
         st.divider()
 
@@ -174,7 +192,7 @@ if st.session_state.show_checkout:
                 else:
                     total = sum(
                         (next((p["price"] for p in PRODUCTS if p["id"] == pid), 0) + SIZE_OPTIONS.get(size, 0)) * qty
-                        for (pid, size), qty in st.session_state.cart.items()
+                        for (pid, size, sugar, ice), qty in st.session_state.cart.items()
                     )
                     shipping = 60 if total > 0 and total < 200 else 0
                     
@@ -207,12 +225,12 @@ if st.session_state.order_completed:
     st.divider()
     st.subheader("🧾 Order Details")
     
-    for (pid, size), qty in order["items"].items():
+    for (pid, size, sugar, ice), qty in order["items"].items():
         product = next((p for p in PRODUCTS if p["id"] == pid), None)
         if product:
             size_price = SIZE_OPTIONS.get(size, 0)
             item_price = product["price"] + size_price
-            st.write(f"{product['emoji']} {product['title']} ({size}) × {qty} = {format_currency(item_price * qty)}")
+            st.write(f"{product['emoji']} {product['title']} ({size} | {sugar} | {ice}) × {qty} = {format_currency(item_price * qty)}")
     
     st.divider()
     st.markdown(f"### 💰 Total Amount: {format_currency(order['total'])}")
