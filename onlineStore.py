@@ -88,8 +88,16 @@ def reset_order():
 st.set_page_config(page_title="Bubble Tea Shop", page_icon="🧋")
 st.title("🧋 Bubble Tea Shop")
 
-# Sidebar - Shopping Cart
-search_query = st.sidebar.text_input("🔍 Search drinks", "")
+# Sidebar - Category Filter and Search
+st.sidebar.subheader("🔍 Filter & Search")
+
+category_filter = st.sidebar.selectbox(
+    "Category",
+    options=["All", "Tea", "Latte", "Fruit", "Special"],
+    index=0
+)
+
+search_query = st.sidebar.text_input("Search drinks", "")
 
 st.sidebar.subheader("🛒 Shopping Cart")
 
