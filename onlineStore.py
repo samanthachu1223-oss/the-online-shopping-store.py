@@ -5,11 +5,36 @@ import streamlit as st
 # -----------------------------
 
 PRODUCTS = [
-    {"id": "p1", "title": "Bubble Milk Tea", "description": "Classic favorite with chewy tapioca pearls", "price": 60, "emoji": "🧋"},
-    {"id": "p2", "title": "Yakult Green Tea", "description": "Refreshing green tea with tangy Yakult", "price": 55, "emoji": "🍵"},
-    {"id": "p3", "title": "Matcha Latte", "description": "Rich matcha flavor with creamy milk", "price": 70, "emoji": "🍵"},
-    {"id": "p4", "title": "Oolong Milk Tea", "description": "Perfect blend of oolong tea and fresh milk", "price": 65, "emoji": "🥛"},
-    {"id": "p5", "title": "Winter Melon Lemon", "description": "Traditional winter melon with fresh lemon", "price": 50, "emoji": "🍋"},
+    {"id": "p1", "title": "Bubble Milk Tea", "description": "Classic favorite with chewy tapioca pearls", "price": 60, "emoji": "🧋", "category": "tea"},
+    {"id": "p2", "title": "Yakult Green Tea", "description": "Refreshing green tea with tangy Yakult", "price": 55, "emoji": "🍵", "category": "tea"},
+    {"id": "p3", "title": "Matcha Latte", "description": "Rich matcha flavor with creamy milk", "price": 70, "emoji": "🍵", "category": "latte"},
+    {"id": "p4", "title": "Oolong Milk Tea", "description": "Perfect blend of oolong tea and fresh milk", "price": 65, "emoji": "🥛", "category": "tea"},
+    {"id": "p5", "title": "Winter Melon Lemon", "description": "Traditional winter melon with fresh lemon", "price": 50, "emoji": "🍋", "category": "fruit"},
+    {"id": "p6", "title": "Taro Milk Tea", "description": "Creamy taro blended with milk tea", "price": 65, "emoji": "🟣", "category": "tea"},
+    {"id": "p7", "title": "Brown Sugar Boba", "description": "Sweet brown sugar syrup with fresh milk and boba", "price": 75, "emoji": "🧋", "category": "special"},
+    {"id": "p8", "title": "Thai Milk Tea", "description": "Rich and creamy Thai-style tea", "price": 60, "emoji": "🧡", "category": "tea"},
+    {"id": "p9", "title": "Mango Smoothie", "description": "Fresh mango blended into a creamy smoothie", "price": 80, "emoji": "🥭", "category": "fruit"},
+    {"id": "p10", "title": "Strawberry Milk Tea", "description": "Sweet strawberry flavor with milk tea", "price": 70, "emoji": "🍓", "category": "fruit"},
+    {"id": "p11", "title": "Caramel Latte", "description": "Smooth coffee with sweet caramel", "price": 75, "emoji": "☕", "category": "latte"},
+    {"id": "p12", "title": "Lemon Green Tea", "description": "Refreshing green tea with fresh lemon", "price": 50, "emoji": "🍋", "category": "tea"},
+    {"id": "p13", "title": "Honey Milk Tea", "description": "Natural honey sweetness with milk tea", "price": 65, "emoji": "🍯", "category": "tea"},
+    {"id": "p14", "title": "Passion Fruit Tea", "description": "Tropical passion fruit with green tea", "price": 60, "emoji": "🟠", "category": "fruit"},
+    {"id": "p15", "title": "Coconut Smoothie", "description": "Creamy coconut blended smoothie", "price": 75, "emoji": "🥥", "category": "fruit"},
+    {"id": "p16", "title": "Black Tea Latte", "description": "Classic black tea with steamed milk", "price": 65, "emoji": "☕", "category": "latte"},
+    {"id": "p17", "title": "Peach Oolong Tea", "description": "Fragrant oolong with sweet peach", "price": 60, "emoji": "🍑", "category": "tea"},
+    {"id": "p18", "title": "Hazelnut Latte", "description": "Nutty hazelnut flavor with espresso", "price": 80, "emoji": "🌰", "category": "latte"},
+    {"id": "p19", "title": "Rose Milk Tea", "description": "Delicate rose flavor with milk tea", "price": 70, "emoji": "🌹", "category": "tea"},
+    {"id": "p20", "title": "Watermelon Juice", "description": "Fresh watermelon juice, perfect for summer", "price": 55, "emoji": "🍉", "category": "fruit"},
+    {"id": "p21", "title": "Chocolate Milk Tea", "description": "Rich chocolate combined with milk tea", "price": 70, "emoji": "🍫", "category": "tea"},
+    {"id": "p22", "title": "Vanilla Latte", "description": "Smooth vanilla with rich espresso", "price": 75, "emoji": "☕", "category": "latte"},
+    {"id": "p23", "title": "Lychee Tea", "description": "Sweet lychee with jasmine green tea", "price": 60, "emoji": "🍇", "category": "tea"},
+    {"id": "p24", "title": "Pineapple Smoothie", "description": "Tropical pineapple blended smoothie", "price": 75, "emoji": "🍍", "category": "fruit"},
+    {"id": "p25", "title": "Earl Grey Milk Tea", "description": "Aromatic Earl Grey with creamy milk", "price": 65, "emoji": "☕", "category": "tea"},
+    {"id": "p26", "title": "Kiwi Fruit Tea", "description": "Tangy kiwi with green tea", "price": 60, "emoji": "🥝", "category": "fruit"},
+    {"id": "p27", "title": "Mocha Latte", "description": "Espresso with chocolate and steamed milk", "price": 80, "emoji": "☕", "category": "latte"},
+    {"id": "p28", "title": "Almond Milk Tea", "description": "Nutty almond flavor with milk tea", "price": 70, "emoji": "🥜", "category": "tea"},
+    {"id": "p29", "title": "Blueberry Smoothie", "description": "Antioxidant-rich blueberry smoothie", "price": 80, "emoji": "🫐", "category": "fruit"},
+    {"id": "p30", "title": "Jasmine Green Tea", "description": "Fragrant jasmine flowers with green tea", "price": 50, "emoji": "🌸", "category": "tea"},
 ]
 
 SIZE_OPTIONS = {
@@ -157,9 +182,15 @@ for product in filtered_products:
                 )
             
             with ice_col:
+                # Only tea and latte categories can have Hot option
+                if product["category"] in ["tea", "latte"]:
+                    ice_options = ICE_OPTIONS
+                else:
+                    ice_options = [opt for opt in ICE_OPTIONS if opt != "Hot"]
+                
                 ice = st.selectbox(
                     "Ice Level",
-                    options=ICE_OPTIONS,
+                    options=ice_options,
                     key=f"ice_{product['id']}"
                 )
             
