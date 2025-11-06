@@ -1,7 +1,7 @@
 import streamlit as st
 
 # -----------------------------
-# Advanced Online Shop - Stable Version (No Double Click Issue)
+# Advanced Online Shop - Safe Stable Version
 # -----------------------------
 
 PRODUCTS = [
@@ -11,9 +11,7 @@ PRODUCTS = [
     {"id": "p4", "title": "Running Sneakers", "description": "Lightweight cushioning for running and daily wear.", "price": 2590},
 ]
 
-# -----------------------------
-# Initialize State
-# -----------------------------
+# Initialize session state
 if "cart" not in st.session_state:
     st.session_state.cart = {}
 if "show_checkout" not in st.session_state:
@@ -21,30 +19,31 @@ if "show_checkout" not in st.session_state:
 if "order_completed" not in st.session_state:
     st.session_state.order_completed = None
 
-# -----------------------------
-# Helper Functions
-# -----------------------------
+# Helper functions
 def format_currency(amount):
     return f"NT$ {amount:,}"
 
 def add_to_cart(pid, qty=1):
     st.session_state.cart[pid] = st.session_state.cart.get(pid, 0) + qty
+    st.rerun()
 
 def update_cart_qty(pid, qty):
     if qty <= 0:
         st.session_state.cart.pop(pid, None)
     else:
         st.session_state.cart[pid] = qty
+    st.rerun()
 
 def clear_cart():
     st.session_state.cart = {}
+    st.rerun()
 
 # -----------------------------
 # UI
 # -----------------------------
 st.title("🛒 Advanced Online Shop")
 
-# --- Sidebar ---
+# Sidebar
 search_query = st.sidebar.text_input("Search products", "")
 
 st.sidebar.subheader("Shopping Cart")
@@ -53,18 +52,19 @@ if not st.session_state.cart:
     st.sidebar.write("Your cart is empty.")
 else:
     total = 0
-    remove_list = []
+    cart_snapshot = list(st.session_state.cart.items())  # make a safe copy
 
-    for pid, qty in st.session_state.cart.items():
+    for pid, qty in cart_snapshot:
         product = next((p for p in PRODUCTS if p["id"] == pid), None)
         if not product:
             continue
-        st.sidebar.write(f"**{product['title']}** — {format_currency(product['price'])} x {qty} = {format_currency(product['price']*qty)}")
+        st.sidebar.write(f"**{product['title']}** — {format_currency(product['price'])} × {qty} = {format_currency(product['price'] * qty)}")
+
         new_qty = st.sidebar.number_input(
             f"Quantity for {product['title']}",
             min_value=0,
             value=qty,
-            key=f"qty_{pid}",
+            key=f"qty_{pid}"
         )
         if new_qty != qty:
             update_cart_qty(pid, new_qty)
@@ -77,15 +77,12 @@ else:
 
     if st.sidebar.button("Clear Cart"):
         clear_cart()
-        st.experimental_set_query_params(refresh=str(hash(str(st.session_state.cart))))  # small refresh trick
-        st.rerun()
 
     if st.sidebar.button("Checkout"):
         st.session_state.show_checkout = True
-        st.experimental_set_query_params(refresh=str(hash(str(st.session_state.cart))))
         st.rerun()
 
-# --- Main: Product List ---
+# Product display
 filtered_products = [
     p for p in PRODUCTS
     if search_query.lower() in p["title"].lower()
@@ -98,11 +95,8 @@ for product in filtered_products:
     st.write(f"Price: {format_currency(product['price'])}")
     if st.button("Add to Cart", key=f"add_{product['id']}"):
         add_to_cart(product["id"])
-        st.success(f"Added {product['title']} to cart!")
-        st.experimental_set_query_params(refresh=str(hash(str(st.session_state.cart))))
-        st.rerun()
 
-# --- Checkout ---
+# Checkout form
 if st.session_state.show_checkout:
     st.subheader("Checkout")
     with st.form("checkout_form"):
@@ -124,10 +118,9 @@ if st.session_state.show_checkout:
             }
             clear_cart()
             st.session_state.show_checkout = False
-            st.experimental_set_query_params(refresh=str(hash(str(st.session_state.cart))))
             st.rerun()
 
-# --- Confirmation ---
+# Order confirmation
 if st.session_state.order_completed:
     st.success(f"✅ Order Confirmed! ID: {st.session_state.order_completed['id']}")
     st.write(f"Total Paid: {format_currency(st.session_state.order_completed['total'])}")
