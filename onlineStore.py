@@ -99,6 +99,7 @@ category_filter = st.sidebar.selectbox(
 
 search_query = st.sidebar.text_input("Search drinks", "")
 
+st.sidebar.divider()
 st.sidebar.subheader("🛒 Shopping Cart")
 
 if not st.session_state.cart:
@@ -149,17 +150,27 @@ else:
             st.rerun()
 
 # -----------------------------
-# Product Display
+# Product Display with Category Tabs
 # -----------------------------
 st.subheader("☕ Menu")
 
+# Filter products by category and search
 filtered_products = [
     p for p in PRODUCTS
-    if search_query.lower() in p["title"].lower()
-    or search_query.lower() in p["description"].lower()
+    if (category_filter == "All" or p["category"] == category_filter.lower())
+    and (search_query.lower() in p["title"].lower() or search_query.lower() in p["description"].lower())
 ]
 
-for product in filtered_products:
+# Show category count
+if category_filter != "All":
+    st.caption(f"Showing {len(filtered_products)} drinks in {category_filter} category")
+else:
+    st.caption(f"Showing all {len(filtered_products)} drinks")
+
+if not filtered_products:
+    st.info("No drinks found. Try a different search or category!")
+else:
+    for product in filtered_products:
     with st.container():
         col1, col2 = st.columns([1, 4])
         with col1:
