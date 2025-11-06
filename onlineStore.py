@@ -132,13 +132,7 @@ else:
         total += item_price * qty
         st.sidebar.divider()
 
-    shipping = 60 if total > 0 and total < 200 else 0
-    st.sidebar.markdown(f"**Subtotal:** {format_currency(total)}")
-    if shipping > 0:
-        st.sidebar.markdown(f"**Shipping:** {format_currency(shipping)} (Free over NT$200)")
-    else:
-        st.sidebar.markdown(f"**Shipping:** Free 🎉")
-    st.sidebar.markdown(f"### **Total:** {format_currency(total + shipping)}")
+    st.sidebar.markdown(f"### **Total:** {format_currency(total)}")
 
     col1, col2 = st.sidebar.columns(2)
     with col1:
@@ -232,26 +226,23 @@ if st.session_state.show_checkout:
         with st.form("checkout_form"):
             name = st.text_input("Name *")
             phone = st.text_input("Phone *")
-            address = st.text_area("Delivery Address *")
-            notes = st.text_area("Notes (sugar level, ice level, etc.)", placeholder="e.g., Half sugar, less ice")
             
             submitted = st.form_submit_button("Place Order", type="primary")
             
             if submitted:
-                if not name or not phone or not address:
+                if not name or not phone:
                     st.error("Please fill in all required fields")
                 else:
                     total = sum(
                         (next((p["price"] for p in PRODUCTS if p["id"] == pid), 0) + SIZE_OPTIONS.get(size, 0)) * qty
                         for (pid, size, sugar, ice), qty in st.session_state.cart.items()
                     )
-                    shipping = 60 if total > 0 and total < 200 else 0
                     
                     st.session_state.order_completed = {
                         "id": f"ORD-{abs(hash(str(st.session_state.cart))) % 100000}",
-                        "customer": {"name": name, "phone": phone, "address": address, "notes": notes},
+                        "customer": {"name": name, "phone": phone},
                         "items": st.session_state.cart.copy(),
-                        "total": total + shipping,
+                        "total": total,
                     }
                     clear_cart()
                     st.session_state.show_checkout = False
@@ -264,14 +255,8 @@ if st.session_state.order_completed:
     order = st.session_state.order_completed
     st.success(f"✅ Order Confirmed! Order ID: {order['id']}")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        st.write(f"**Name:** {order['customer']['name']}")
-        st.write(f"**Phone:** {order['customer']['phone']}")
-    with col2:
-        st.write(f"**Address:** {order['customer']['address']}")
-        if order['customer']['notes']:
-            st.write(f"**Notes:** {order['customer']['notes']}")
+    st.write(f"**Name:** {order['customer']['name']}")
+    st.write(f"**Phone:** {order['customer']['phone']}")
     
     st.divider()
     st.subheader("🧾 Order Details")
@@ -285,7 +270,7 @@ if st.session_state.order_completed:
     
     st.divider()
     st.markdown(f"### 💰 Total Amount: {format_currency(order['total'])}")
-    st.info("⏰ Estimated delivery time: 30-40 minutes. Thank you for your patience!")
+    st.info("⏰ Thank you for your order! Please proceed to the counter for pickup.")
     
     if st.button("Return to Shop", type="primary"):
         reset_order()
