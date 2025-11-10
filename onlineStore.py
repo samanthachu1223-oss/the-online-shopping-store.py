@@ -91,7 +91,7 @@ st.title("🧋 Bubble Tea Shop")
 # Sidebar - Category Filter and Search
 st.sidebar.subheader("🔍 Filter & Search")
 
-category_filter = st.sidebar.selectbox(
+category_filter = st.sidebar.radio(
     "Category",
     options=["All", "Tea", "Latte", "Fruit", "Special"],
     index=0
@@ -146,73 +146,75 @@ else:
 # -----------------------------
 # Product Display with Category Tabs
 # -----------------------------
-st.subheader("☕ Menu")
+# Only show menu if not in checkout mode
+if not st.session_state.show_checkout:
+    st.subheader("☕ Menu")
 
-# Filter products by category and search
-filtered_products = [
-    p for p in PRODUCTS
-    if (category_filter == "All" or p["category"] == category_filter.lower())
-    and (search_query.lower() in p["title"].lower() or search_query.lower() in p["description"].lower())
-]
+    # Filter products by category and search
+    filtered_products = [
+        p for p in PRODUCTS
+        if (category_filter == "All" or p["category"] == category_filter.lower())
+        and (search_query.lower() in p["title"].lower() or search_query.lower() in p["description"].lower())
+    ]
 
-# Show category count
-if category_filter != "All":
-    st.caption(f"Showing {len(filtered_products)} drinks in {category_filter} category")
-else:
-    st.caption(f"Showing all {len(filtered_products)} drinks")
+    # Show category count
+    if category_filter != "All":
+        st.caption(f"Showing {len(filtered_products)} drinks in {category_filter} category")
+    else:
+        st.caption(f"Showing all {len(filtered_products)} drinks")
 
-if not filtered_products:
-    st.info("No drinks found. Try a different search or category!")
-else:
-    for product in filtered_products:
-        with st.container():
-            col1, col2 = st.columns([1, 4])
-            with col1:
-                st.markdown(f"## {product['emoji']}")
-            with col2:
-                st.markdown(f"### {product['title']}")
-                st.caption(f"🏷️ {product['category'].title()}")
-                st.write(product["description"])
-                st.write(f"💰 Price: {format_currency(product['price'])} and up")
-                
-                # Create three columns for size, sugar, and ice
-                size_col, sugar_col, ice_col = st.columns(3)
-                
-                with size_col:
-                    size = st.selectbox(
-                        "Size",
-                        options=list(SIZE_OPTIONS.keys()),
-                        key=f"size_{product['id']}"
-                    )
-                    size_price = SIZE_OPTIONS[size]
-                    if size_price > 0:
-                        st.caption(f"+{format_currency(size_price)}")
-                
-                with sugar_col:
-                    sugar = st.selectbox(
-                        "Sugar Level",
-                        options=SUGAR_OPTIONS,
-                        key=f"sugar_{product['id']}"
-                    )
-                
-                with ice_col:
-                    # Only tea and latte categories can have Hot option
-                    if product["category"] in ["tea", "latte"]:
-                        ice_options = ICE_OPTIONS
-                    else:
-                        ice_options = [opt for opt in ICE_OPTIONS if opt != "Hot"]
+    if not filtered_products:
+        st.info("No drinks found. Try a different search or category!")
+    else:
+        for product in filtered_products:
+            with st.container():
+                col1, col2 = st.columns([1, 4])
+                with col1:
+                    st.markdown(f"## {product['emoji']}")
+                with col2:
+                    st.markdown(f"### {product['title']}")
+                    st.caption(f"🏷️ {product['category'].title()}")
+                    st.write(product["description"])
+                    st.write(f"💰 Price: {format_currency(product['price'])} and up")
                     
-                    ice = st.selectbox(
-                        "Ice Level",
-                        options=ice_options,
-                        key=f"ice_{product['id']}"
-                    )
+                    # Create three columns for size, sugar, and ice
+                    size_col, sugar_col, ice_col = st.columns(3)
+                    
+                    with size_col:
+                        size = st.selectbox(
+                            "Size",
+                            options=list(SIZE_OPTIONS.keys()),
+                            key=f"size_{product['id']}"
+                        )
+                        size_price = SIZE_OPTIONS[size]
+                        if size_price > 0:
+                            st.caption(f"+{format_currency(size_price)}")
+                    
+                    with sugar_col:
+                        sugar = st.selectbox(
+                            "Sugar Level",
+                            options=SUGAR_OPTIONS,
+                            key=f"sugar_{product['id']}"
+                        )
+                    
+                    with ice_col:
+                        # Only tea and latte categories can have Hot option
+                        if product["category"] in ["tea", "latte"]:
+                            ice_options = ICE_OPTIONS
+                        else:
+                            ice_options = [opt for opt in ICE_OPTIONS if opt != "Hot"]
+                        
+                        ice = st.selectbox(
+                            "Ice Level",
+                            options=ice_options,
+                            key=f"ice_{product['id']}"
+                        )
+                    
+                    if st.button("Add to Cart", key=f"add_{product['id']}", use_container_width=True):
+                        add_to_cart(product["id"], size, sugar, ice)
+                        st.success("Added!")
                 
-                if st.button("Add to Cart", key=f"add_{product['id']}", use_container_width=True):
-                    add_to_cart(product["id"], size, sugar, ice)
-                    st.success("Added!")
-            
-            st.divider()
+                st.divider()
 
 # -----------------------------
 # Checkout Form
